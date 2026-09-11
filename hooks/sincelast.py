@@ -93,7 +93,13 @@ def prune_state(root, now: float, days: int = STATE_TTL_DAYS) -> int:
     cutoff = now - days * 86400
     removed = 0
     try:
-        entries = list(pathlib.Path(root).iterdir())
+        # *.json only — never iterdir(). A concurrent writer's mkstemp
+        # temp file sits in this directory, created but not yet filled,
+        # until its os.replace lands. iterdir() saw it, load_state
+        # returned None, and this loop deleted another process's file
+        # mid-write: that writer then failed os.replace and lost its
+        # state silently. Temp files carry no .json suffix.
+        entries = list(pathlib.Path(root).glob("*.json"))
     except OSError:
         return 0
     for entry in entries:

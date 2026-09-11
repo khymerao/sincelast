@@ -81,3 +81,51 @@ def test_prune_removes_unreadable_entries(tmp_path):
     junk.write_text("not json", encoding="utf-8")
     assert sl.prune_state(d, 1_800_000_000.0, days=30) == 1
     assert not junk.exists()
+
+def test_prune_never_touches_a_concurrent_writers_temp_file(tmp_path):
+    """Регресія на справжню гонку, знайдену чорноскриньковим прогоном.
+
+    save_state створює mkstemp-файл ПОРОЖНІМ і заповнює його перед
+    os.replace. Доти він лежить у теці. prune_state ходив по iterdir(),
+    читав його як невалідний стан і видаляв — чужий процес потім падав
+    на os.replace, і його стан зникав мовчки. Відтворювалось приблизно
+    в одному прогоні з восьми при шести паралельних сесіях."""
+    import os, tempfile
+    root = tmp_path / "sincelast"
+    root.mkdir(parents=True)
+    sl.save_state(root / "other.json", {"updated_ts": 9e9})
+
+    fd, tmp = tempfile.mkstemp(dir=str(root), prefix=".tmp-")   # порожній, як у mkstemp
+    os.close(fd)
+
+    sl.prune_state(root, now=1e9)
+
+    assert os.path.exists(tmp), "prune видалив тимчасовий файл чужого процесу"
+    assert (root / "other.json").exists(), "prune видалив валідний чужий стан"
+
+
+def test_prune_still_removes_genuinely_old_state(tmp_path):
+    """Захист не має зламати саме прибирання: старий стан мусить піти."""
+    import os
+    root = tmp_path / "sincelast"
+    root.mkdir(parents=True)
+    old = root / "ancient.json"
+    sl.save_state(old, {"updated_ts": 1000.0})
+    ancient = 1000.0
+    os.utime(old, (ancient, ancient))          # і mtime теж старий
+    assert sl.prune_state(root, now=1e9) == 1
+    assert not old.exists()
+
+
+def test_prune_removes_an_unreadable_json_file(tmp_path):
+    """Свідомо лишено як було: файл із суфіксом .json, який не читається,
+    видаляється — він мертва вага. Часткового .json при нормальному записі
+    не буває: save_state пише в mkstemp без суфікса і робить атомарний
+    os.replace, тож недописаного .json просто не існує."""
+    root = tmp_path / "sincelast"
+    root.mkdir(parents=True)
+    junk = root / "junk.json"
+    junk.write_text('{"updated_ts": ', encoding="utf-8")
+    assert sl.prune_state(root, now=1e9) == 1
+    assert not junk.exists()
+
