@@ -1,0 +1,19 @@
+{
+  "name": "sincelast",
+  "owner": {
+    "name": "khymerao"
+  },
+  "metadata": {
+    "description": "Temporal facts for Claude Code agents",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "sincelast",
+      "source": "./",
+      "description": "Tells your Claude Code agent when the calendar date or git HEAD moved behind its back, and says nothing otherwise.",
+      "version": "0.1.0",
+      "keywords": ["time", "date", "git", "hooks", "context"]
+    }
+  ]
+}

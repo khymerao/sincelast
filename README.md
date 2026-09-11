@@ -47,9 +47,19 @@ What it does not do: talk. No line is added when nothing changed, so none of thi
 
 ### As a plugin
 
-Clone the repository and add it as a Claude Code plugin. The three hooks
-(`SessionStart`, `UserPromptSubmit`, `Stop`) register themselves from
-`hooks/hooks.json`, which resolves `${CLAUDE_PLUGIN_ROOT}` for you.
+```
+claude plugin marketplace add khymerao/sincelast
+claude plugin install sincelast@sincelast
+```
+
+The three hooks (`SessionStart`, `UserPromptSubmit`, `Stop`) register themselves
+from `hooks/hooks.json`, which resolves `${CLAUDE_PLUGIN_ROOT}` for you. To
+remove it:
+
+```
+claude plugin uninstall sincelast@sincelast
+claude plugin marketplace remove sincelast
+```
 
 ### Without a marketplace
 
@@ -155,14 +165,15 @@ The plugin itself needs nothing but the standard library. The **tests** need
 pytest, which is a development dependency and deliberately not vendored:
 
 ```
-python3 -m venv .venv
-.venv/bin/python -m pip install pytest
-.venv/bin/python -m pytest tests/ -q
+python3 -m venv ~/.venvs/sincelast
+~/.venvs/sincelast/bin/python -m pip install pytest
+~/.venvs/sincelast/bin/python -m pytest tests/ -q
 ```
 
-Keep the venv outside your working tree if the repository is under any tool
-that measures changed files: a `.venv/` inside the tree shows up as thousands
-of modified paths.
+The venv goes outside the working tree on purpose. Put it in `.venv/` here and
+any tool that measures changed files sees thousands of modified paths under
+`site-packages`. On Windows the interpreter is `Scripts\python.exe` rather than
+`bin/python`.
 
 The unit tests run offline and create no files outside `tmp_path`.
 
@@ -230,7 +241,17 @@ sincelast каже твоєму агентові в Claude Code, що кален
 
 ### Плагіном
 
-Склонуй і додай як плагін Claude Code. Три хуки (`SessionStart`, `UserPromptSubmit`, `Stop`) зареєструються самі з `hooks/hooks.json`, там `${CLAUDE_PLUGIN_ROOT}` підставиться автоматично.
+```
+claude plugin marketplace add khymerao/sincelast
+claude plugin install sincelast@sincelast
+```
+
+Три хуки (`SessionStart`, `UserPromptSubmit`, `Stop`) зареєструються самі з `hooks/hooks.json`, там `${CLAUDE_PLUGIN_ROOT}` підставиться автоматично. Знести:
+
+```
+claude plugin uninstall sincelast@sincelast
+claude plugin marketplace remove sincelast
+```
 
 ### Руками, без маркетплейсу
 
@@ -325,12 +346,12 @@ Dev-контейнер, що крутиться в UTC (звичайна спр�
 Самому плагіну не треба нічого, крім стандартної бібліотеки. А тестам потрібен pytest, і він свідомо не лежить у репо:
 
 ```
-python3 -m venv .venv
-.venv/bin/python -m pip install pytest
-.venv/bin/python -m pytest tests/ -q
+python3 -m venv ~/.venvs/sincelast
+~/.venvs/sincelast/bin/python -m pip install pytest
+~/.venvs/sincelast/bin/python -m pytest tests/ -q
 ```
 
-Тримай venv поза робочим деревом, якщо репо під якимось інструментом, що дивиться на змінені файли. `.venv/` усередині виглядає як тисячі змінених шляхів.
+venv навмисно поза робочим деревом. Поклади його в `.venv/` тут, і будь-який інструмент, що дивиться на змінені файли, побачить тисячі шляхів у `site-packages`. На Windows інтерпретатор лежить у `Scripts\python.exe`, а не в `bin/python`.
 
 Unit-тести працюють офлайн і нічого не створюють поза `tmp_path`.
 
