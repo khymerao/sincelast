@@ -224,6 +224,16 @@ T_GIT_MOVED = ("Git position changed since the agent's last turn ended: "
 P_BRANCH = 'branch "{branch}" at {sha}'
 P_DETACHED = "detached HEAD at {sha}"
 
+# A note, never a fact of its own. It attaches to a git fact to say how
+# long the gap was, and is omitted when there is no fact to attach to.
+# A duration alone has no consumer: the agent cannot act on "14h passed"
+# without also knowing what changed, and telling it to reason about the
+# gap is the prompt-based alignment this design avoids.
+T_SINCE = " That was {ago} ago."
+
+# Below this, a gap explains nothing. "4m ago" is noise, not context.
+MIN_AGO_S = 600
+
 _BRANCH_MAX_LEN = 200  # spec §12b: names longer than this are data, not names
 _CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -256,6 +266,32 @@ def render_date(today: str, start_date: str) -> str:
     return T_DATE.format(today=today, start_date=start_date)
 
 
+def format_ago(seconds):
+    """Coarse, deliberately. Minutes below an hour, hours below a day,
+    days after that. Precision here would invite the agent to reason
+    about the number instead of reading the fact it annotates."""
+    # The threshold also covers a rewound clock: a negative gap is below
+    # it by definition, so no note is produced.
+    if seconds is None or seconds < MIN_AGO_S:
+        return None
+    seconds = int(seconds)
+    if seconds < 3600:
+        return "%dm" % (seconds // 60)
+    if seconds < 86400:
+        return "%dh" % (seconds // 3600)
+    return "%dd" % (seconds // 86400)
+
+
+def with_ago(fact: str, seconds):
+    """Attach the gap note to a fact. No fact, no note."""
+    if not fact:
+        return fact
+    ago = format_ago(seconds)
+    if ago is None:
+        return fact
+    return fact + T_SINCE.format(ago=ago)
+
+
 def render_git(kind: str, params: dict) -> str:
     if kind == "AHEAD":
         return T_GIT_AHEAD.format(branch=_sanitize_branch(params["branch"]),
@@ -272,6 +308,22 @@ def render_git(kind: str, params: dict) -> str:
 
 
 # --- DISPATCH --------------------------------------------------------------
+
+def _gap(saved: dict, now: float):
+    """Seconds since the agent's turn ended, or None when unknowable.
+
+    None, never a guess: a session whose Stop was never seen (installed
+    mid-session, or a crash) has no anchor, and inventing one would put a
+    made-up duration on a real fact."""
+    ts = saved.get("stop_ts")
+    if not isinstance(ts, (int, float)):
+        return None
+    # A rewound clock yields a negative gap, which format_ago already
+    # drops: anything below MIN_AGO_S produces no note. Clamping here too
+    # was unreachable, and an unreachable guard is a second mechanism
+    # nobody can test.
+    return now - ts
+
 
 def dispatch(payload: dict, now: float, root):
     """Pure(-ish) core: no stdin/stdout, no sys.exit. Returns the
@@ -291,6 +343,9 @@ def dispatch(payload: dict, now: float, root):
         data = dict(saved or {})
         data["git"] = git_snapshot(cwd, GIT_TIMEOUT_S)
         data["updated_ts"] = now
+        # Its own anchor. updated_ts is rewritten on every save, including
+        # on UserPromptSubmit, so it cannot say when the turn ended.
+        data["stop_ts"] = now
         # A Stop seen before any SessionStart would otherwise write a record
         # with no start_date. The next UserPromptSubmit takes the "state
         # exists" branch, never anchors, and date_changed(None, ...) is False
@@ -310,7 +365,7 @@ def dispatch(payload: dict, now: float, root):
                 # process — compare against it before re-anchoring.
                 cmp_ = git_compare(saved.get("git"), new_git, cwd, GIT_TIMEOUT_S)
                 if cmp_ is not None:
-                    fact = render_git(*cmp_)
+                    fact = with_ago(render_git(*cmp_), _gap(saved, now))
             # startup|clear|fork: no prior belief exists, snapshot silently.
             save_state(path, {"start_date": today, "announced_date": None,
                               "updated_ts": now, "git": new_git})
@@ -342,7 +397,7 @@ def dispatch(payload: dict, now: float, root):
         new_git = git_snapshot(cwd, GIT_TIMEOUT_S)
         cmp_ = git_compare(saved.get("git"), new_git, cwd, GIT_TIMEOUT_S)
         if cmp_ is not None:
-            facts.append(render_git(*cmp_))
+            facts.append(with_ago(render_git(*cmp_), _gap(saved, now)))
         saved["git"] = new_git
         saved["updated_ts"] = now
         save_state(path, saved)

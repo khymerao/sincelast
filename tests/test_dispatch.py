@@ -217,3 +217,58 @@ def test_disable_env_silences_everything(tmp_path, monkeypatch, repo):
     assert proc.returncode == 0
     assert proc.stdout == ""
     assert not (tmp_path / "sincelast").exists(), "вимкнений плагін не пише стан"
+
+
+# --- примітка про паузу, наскрізно ---------------------------------------
+
+def test_gap_note_rides_on_the_git_fact(tmp_path, repo):
+    """Довга пауза плюс зовнішня зміна: факт несе примітку."""
+    root, now = tmp_path, 1_800_000_000.0
+    sl.dispatch(base("UserPromptSubmit", cwd=repo), now, root)
+    sl.dispatch(base("Stop", cwd=repo), now + 5, root)
+    _git(repo, "commit", "-q", "--allow-empty", "-m", "external")
+    out = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 5 + 50400, root)
+    assert out is not None
+    assert "1 new commit(s)" in out
+    assert "14h ago" in out, out
+
+
+def test_short_gap_carries_no_note(tmp_path, repo):
+    """Хвилина паузи нічого не пояснює: факт є, примітки нема."""
+    root, now = tmp_path, 1_800_000_000.0
+    sl.dispatch(base("UserPromptSubmit", cwd=repo), now, root)
+    sl.dispatch(base("Stop", cwd=repo), now + 5, root)
+    _git(repo, "commit", "-q", "--allow-empty", "-m", "external")
+    out = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 65, root)
+    assert out is not None and "1 new commit(s)" in out
+    assert "ago" not in out, out
+
+
+def test_no_note_without_a_stop_anchor(tmp_path, repo):
+    """Stop не бачили: тривалості не існує, і вигадувати її не можна."""
+    root, now = tmp_path, 1_800_000_000.0
+    sl.dispatch(base("UserPromptSubmit", cwd=repo), now, root)
+    _git(repo, "commit", "-q", "--allow-empty", "-m", "external")
+    out = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 50400, root)
+    assert out is not None and "1 new commit(s)" in out
+    assert "ago" not in out, out
+
+
+def test_date_alone_never_carries_a_note(tmp_path, repo):
+    """Примітка пояснює зміну git. Сама дата її не отримує."""
+    root, now = tmp_path, 1_800_000_000.0
+    sl.dispatch(base("SessionStart", source="startup", cwd=repo), now, root)
+    sl.dispatch(base("Stop", cwd=repo), now + 5, root)
+    out = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 86_400, root)
+    assert out is not None and "Calendar date changed" in out
+    assert "ago" not in out, out
+
+
+def test_rewound_clock_produces_no_note(tmp_path, repo):
+    """Годинник зсунувся назад: відʼємної паузи не буває."""
+    root, now = tmp_path, 1_800_000_000.0
+    sl.dispatch(base("UserPromptSubmit", cwd=repo), now, root)
+    sl.dispatch(base("Stop", cwd=repo), now + 50400, root)
+    _git(repo, "commit", "-q", "--allow-empty", "-m", "external")
+    out = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 100, root)
+    assert out is not None and "ago" not in out, out

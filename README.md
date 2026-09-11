@@ -10,6 +10,8 @@ sincelast tells your Claude Code agent when the calendar date or the git HEAD mo
 - **DATE.** The system prompt carries the date set once at process start. A session that outlives midnight keeps that stale date. sincelast says when today's date has moved.
 - **GIT.** The agent believes it left HEAD/branch where its own last turn ended. sincelast says when that position moved: externally, or in a way the agent's own commits don't explain.
 
+When the gap was long enough to matter, the git fact carries how long: `That was 14h ago.` It is a note on a fact, never a fact of its own. A duration alone has no consumer, so nothing is said about elapsed time when nothing changed.
+
 The plugin does not advise. It states a fact and stays silent otherwise. Every sentence it can emit is a template constant in `hooks/sincelast.py`; there is no free-form generated text.
 
 ## What it saves you
@@ -22,7 +24,7 @@ Concrete things that go wrong without it, and stop going wrong with it.
 
 **"Check git status first."** The instruction you keep repeating so the agent does not act on a stale picture. It stops being necessary: the agent is told when the position actually moved, and told nothing when it did not.
 
-**Coming back after hours.** You leave for lunch, a meeting, a night. The agent has no idea any time passed and continues as if from the last sentence. Now it knows the date rolled over and the branch moved, and it knows both before touching anything.
+**Coming back after hours.** You leave for lunch, a meeting, a night. The agent has no idea any time passed and continues as if from the last sentence. Now it knows the date rolled over, the branch moved, and how long the gap was, all before touching anything.
 
 What it does not do: talk. No line is added when nothing changed, so none of this costs you a turn of noise.
 
@@ -116,7 +118,7 @@ baseline advanced, so the fact is not repeated.
 
 **The conversation transcript is never read.** `transcript_path` arrives in every hook payload and is deliberately ignored. Transcripts carry tool output in plaintext; a plugin that parses them becomes a second place credentials can leak from.
 
-**What is stored:** one JSON file per session under `${XDG_STATE_HOME:-~/.local/state}/sincelast/`, holding exactly four fields: the process start date, the last-announced date, the last-seen git position (repository path, HEAD SHA, branch name), and a timestamp. The directory is `0700`, files are `0600`, and writes are atomic (temp file plus `os.replace`); a symlink in place of a state file is refused rather than written through.
+**What is stored:** one JSON file per session under `${XDG_STATE_HOME:-~/.local/state}/sincelast/`, holding the process start date, the last-announced date, the last-seen git position (repository path, HEAD SHA, branch name), when the last turn ended, and a timestamp. The directory is `0700`, files are `0600`, and writes are atomic (temp file plus `os.replace`); a symlink in place of a state file is refused rather than written through.
 
 **Retention:** at each session start, state entries whose own recorded timestamp is older than 30 days are deleted.
 
@@ -204,6 +206,8 @@ sincelast каже твоєму агентові в Claude Code, що кален
 - **DATE.** Дату агент бачить один раз, коли стартує процес. Сесія перевалила за північ, а дата так і висить учорашня. sincelast каже, коли сьогодні стало іншим числом.
 - **GIT.** Агент думає, що HEAD і гілка там, де він їх лишив наприкінці свого ходу. sincelast каже, коли вони зрушили: ззовні або так, як його власні коміти не пояснюють.
 
+Якщо пауза була достатньо довга, до git-факту додається її тривалість: `That was 14h ago.` Це примітка до факту, а не окремий факт. Сама по собі тривалість нікому не потрібна, тож коли нічого не змінилось, про час не кажеться нічого.
+
 Плагін не радить. Каже факт і замовкає. Усе, що він узагалі здатен сказати, лежить константами в `hooks/sincelast.py`. Нічого не генерується на льоту.
 
 ## Що це дає на практиці
@@ -216,7 +220,7 @@ sincelast каже твоєму агентові в Claude Code, що кален
 
 **«Спершу глянь git status».** Те, що доводиться повторювати, аби агент не діяв за застарілою картинкою. Більше не треба: йому кажуть, коли позиція справді зрушила, і мовчать, коли ні.
 
-**Повернення через кілька годин.** Пішов на обід, на зустріч, спати. Агент не має уявлення, що минув час, і продовжує з останнього речення. Тепер він знає, що дата перевалила і гілка з'їхала, причому знає це до того, як щось чіпати.
+**Повернення через кілька годин.** Пішов на обід, на зустріч, спати. Агент не має уявлення, що минув час, і продовжує з останнього речення. Тепер він знає, що дата перевалила, гілка з'їхала і скільки саме тривала пауза, причому до того, як щось чіпати.
 
 Чого він не робить: не балакає. Нічого не змінилось, нічого й не додається, тож жоден хід не витрачається на шум.
 
@@ -301,7 +305,7 @@ since the agent's last turn ended.
 
 **Транскрипт розмови не читає взагалі.** `transcript_path` приходить у кожному виклику, і плагін його свідомо ігнорує. У транскриптах лежить вивід інструментів відкритим текстом. Плагін, який туди лізе, стає ще одним місцем, звідки можуть витекти креденшели.
 
-**Що пише на диск:** один JSON на сесію в `${XDG_STATE_HOME:-~/.local/state}/sincelast/`, рівно чотири поля: дата старту процесу, остання оголошена дата, остання побачена позиція git (шлях репо, SHA HEAD, гілка) і таймстемп. Тека `0700`, файли `0600`, запис атомарний (тимчасовий файл плюс `os.replace`). Якщо на місці файлу стану лежить симлінк, плагін відмовиться писати, а не піде крізь нього.
+**Що пише на диск:** один JSON на сесію в `${XDG_STATE_HOME:-~/.local/state}/sincelast/`, дата старту процесу, остання оголошена дата, остання побачена позиція git (шлях репо, SHA HEAD, гілка), час завершення останнього ходу і таймстемп. Тека `0700`, файли `0600`, запис атомарний (тимчасовий файл плюс `os.replace`). Якщо на місці файлу стану лежить симлінк, плагін відмовиться писати, а не піде крізь нього.
 
 **Скільки живе:** на старті сесії викидаються записи, чий власний таймстемп старший за 30 днів.
 

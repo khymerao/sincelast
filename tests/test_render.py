@@ -119,3 +119,44 @@ def test_branch_at_exactly_the_cap_is_not_marked():
     from sincelast import _sanitize_branch, _BRANCH_MAX_LEN
     exact = "y" * _BRANCH_MAX_LEN
     assert _sanitize_branch(exact) == exact
+
+
+# --- примітка про тривалість паузи ---------------------------------------
+
+@pytest.mark.parametrize("seconds,expected", [
+    (600, "10m"), (3599, "59m"), (3600, "1h"), (50400, "14h"),
+    (86399, "23h"), (86400, "1d"), (259200, "3d"),
+])
+def test_format_ago(seconds, expected):
+    assert sl.format_ago(seconds) == expected
+
+
+def test_format_ago_below_threshold_is_none():
+    """Коротка пауза нічого не пояснює. '4 хв тому' це шум, а не контекст."""
+    assert sl.format_ago(599) is None
+    assert sl.format_ago(0) is None
+    assert sl.format_ago(-100) is None
+
+
+def test_ago_note_appends_to_a_git_fact():
+    fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
+    withnote = sl.with_ago(fact, 50400)
+    assert withnote.startswith(fact.rstrip("."))
+    assert "14h" in withnote
+
+
+def test_ago_note_absent_below_threshold():
+    fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
+    assert sl.with_ago(fact, 60) == fact
+
+
+def test_ago_note_absent_without_anchor():
+    """Немає stop_ts — немає примітки. Не вигадуємо тривалість."""
+    fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
+    assert sl.with_ago(fact, None) == fact
+
+
+def test_ago_note_is_a_closed_template():
+    """Примітка теж константа, а не згенерований текст."""
+    assert "{ago}" in sl.T_SINCE
+    assert sl.T_SINCE.count("{") == 1
