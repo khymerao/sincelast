@@ -12,6 +12,20 @@ sincelast tells your Claude Code agent when the calendar date or the git HEAD mo
 
 The plugin does not advise. It states a fact and stays silent otherwise. Every sentence it can emit is a template constant in `hooks/sincelast.py`; there is no free-form generated text.
 
+## Why a fact, not a timestamp
+
+**Silent until it has something to say.** Nothing changed, nothing is injected. The context stays available for work rather than for a clock.
+
+**Names the stale belief, not a number.** Not "it is now 00:51" but "today is the 12th, not the 11th" — the thing the agent currently has wrong. Not "HEAD = 8d22350" but "the branch moved by one commit since your turn ended".
+
+**Judges deterministically instead of asking the model to judge.** [arXiv 2510.23853](https://arxiv.org/abs/2510.23853) (ACL Findings 2026): given explicit timestamps, no model exceeded 65% alignment with human time perception, and prompt-based alignment has "limited effectiveness". Handing over a number is not handing over a judgement. sincelast makes the comparison itself and emits the conclusion.
+
+**Claims only what it verified.** Ancestry and commit counts are asserted only when the named branch is unchanged; a plain `checkout` to a divergent ref reports a move and guesses nothing about history.
+
+**Does not read your conversation.** `transcript_path` arrives on every call and is deliberately ignored.
+
+**Never blocks a turn.** Every failure path is silence and exit 0.
+
 ## Requirements
 
 - **`python3` on PATH.** On stock macOS without Xcode Command Line Tools, invoking `python3` opens an "Install Command Line Developer Tools?" dialog. Install ahead of time: `xcode-select --install`.
@@ -171,13 +185,19 @@ sincelast каже твоєму агентові Claude Code, коли кале�
 
 Плагін не радить. Він констатує факт і мовчить далі. Кожне речення, яке він здатен вимовити, — це константа-шаблон у `hooks/sincelast.py`; вільно згенерованого тексту немає взагалі.
 
-## Чому не просто таймстемп
+## Чому факт, а не таймстемп
 
-Шість наявних плагінів уже вставляють поточний час у контекст. Жоден із них не має порогу чи глушника — усі кажуть щось щоходу.
+**Мовчить, поки не має чого сказати.** Нічого не змінилось — нічого не вставляється. Контекст лишається для роботи, а не для годинника.
 
-Дослідження [arXiv 2510.23853](https://arxiv.org/abs/2510.23853) (ACL Findings 2026) показує, чому цього мало: **навіть коли таймстемпи дано, жодна модель не перевищила 65%** узгодження з людським сприйняттям часу, а вирівнювання через промпт «має обмежену дієвість». Дати моделі число — не те саме, що дати їй судження.
+**Називає конкретне застаріле переконання, а не число.** Не «зараз 00:51», а «сьогодні 12 вересня, а не 11» — тобто саме те, що агент вважає інакше. Не «HEAD = 8d22350», а «гілка зрушила на 1 коміт, відколи ти закінчив хід».
 
-Тому sincelast рахує судження сам, детерміновано, і віддає лише перевірений факт.
+**Судить детерміновано, а не просить судити модель.** [arXiv 2510.23853](https://arxiv.org/abs/2510.23853) (ACL Findings 2026): навіть коли таймстемпи дано, жодна модель не перевищила 65% узгодження з людським сприйняттям часу, а вирівнювання через промпт «має обмежену дієвість». Дати число — не те саме, що дати судження. sincelast робить порівняння сам і віддає готовий висновок.
+
+**Каже лише те, що перевірив.** Твердження про предків і лічильник комітів — лише коли гілка не змінювалась. Звичайний `checkout` на розбіжну гілку дає «позиція змінилась» і жодних здогадів про історію.
+
+**Не читає розмову.** `transcript_path` приходить у кожному виклику і свідомо ігнорується.
+
+**Ніколи не блокує хід.** Будь-який збій — це тиша і код виходу 0.
 
 ## Вимоги
 
