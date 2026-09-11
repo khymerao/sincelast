@@ -16,7 +16,7 @@ The plugin does not advise. It states a fact and stays silent otherwise. Every s
 
 Concrete things that go wrong without it, and stop going wrong with it.
 
-**Files dated yesterday.** You start a session in the evening. Past midnight the agent creates `docs/2026-09-11-design.md`, writes "today" in a changelog, or dates a commit message. All wrong by one day, and none of it obvious until someone sorts the directory. This repository names files that way, which is how the problem was noticed.
+**Files dated yesterday.** You start a session in the evening. Past midnight the agent creates `docs/2026-09-11-design.md`, writes "today" in a changelog, or dates a commit message. All wrong by one day, and none of it obvious until someone sorts the directory. That naming is common for ADRs, specs, changelogs and migrations, and it is where this plugin's own design document got a wrong date during development.
 
 **Work on a branch that moved.** You pull in another terminal, or a teammate pushes, or you rebase. The agent keeps editing against the tree it last saw. Best case it rebuilds something already fixed; worst case it resolves a conflict against a version that no longer exists.
 
@@ -199,7 +199,7 @@ sincelast каже твоєму агентові в Claude Code, що кален
 
 Конкретні речі, які ламаються без нього і перестають ламатись із ним.
 
-**Файли з учорашньою датою.** Почав сесію ввечері. Після півночі агент створює `docs/2026-09-11-design.md`, пише «сьогодні» в чейнджлозі або ставить дату в коміт. Усе на день назад, і ніхто цього не помічає, поки не гляне на теку відсортовану. Цей репозиторій іменує файли саме так, звідси проблему й видно.
+**Файли з учорашньою датою.** Почав сесію ввечері. Після півночі агент створює `docs/2026-09-11-design.md`, пише «сьогодні» в чейнджлозі або ставить дату в коміт. Усе на день назад, і ніхто цього не помічає, поки не гляне на теку відсортовану. Так іменують ADR, специфікації, чейнджлоги, міграції. На такому ж файлі проблема й вилізла, коли робили цей плагін.
 
 **Робота по гілці, яка вже поїхала.** Ти зробив pull в іншому терміналі, або колега запушив, або сам зробив rebase. Агент далі править по тому дереву, яке бачив востаннє. У кращому разі перероблює вже полагоджене, у гіршому розрулює конфлікт проти версії, якої вже нема.
 
