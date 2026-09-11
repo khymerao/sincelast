@@ -12,6 +12,20 @@ sincelast tells your Claude Code agent when the calendar date or the git HEAD mo
 
 The plugin does not advise. It states a fact and stays silent otherwise. Every sentence it can emit is a template constant in `hooks/sincelast.py`; there is no free-form generated text.
 
+## What it saves you
+
+Concrete things that go wrong without it, and stop going wrong with it.
+
+**Files dated yesterday.** You start a session in the evening. Past midnight the agent creates `docs/2026-09-11-design.md`, writes "today" in a changelog, or dates a commit message. All wrong by one day, and none of it obvious until someone sorts the directory. This repository names files that way, which is how the problem was noticed.
+
+**Work on a branch that moved.** You pull in another terminal, or a teammate pushes, or you rebase. The agent keeps editing against the tree it last saw. Best case it rebuilds something already fixed; worst case it resolves a conflict against a version that no longer exists.
+
+**"Check git status first."** The instruction you keep repeating so the agent does not act on a stale picture. It stops being necessary: the agent is told when the position actually moved, and told nothing when it did not.
+
+**Coming back after hours.** You leave for lunch, a meeting, a night. The agent has no idea any time passed and continues as if from the last sentence. Now it knows the date rolled over and the branch moved, and it knows both before touching anything.
+
+What it does not do: talk. No line is added when nothing changed, so none of this costs you a turn of noise.
+
 ## Why a fact, not a timestamp
 
 **Silent until it has something to say.** Nothing changed, nothing is injected. The context stays available for work rather than for a clock.
@@ -180,6 +194,20 @@ sincelast каже твоєму агентові в Claude Code, що кален
 - **GIT.** Агент думає, що HEAD і гілка там, де він їх лишив наприкінці свого ходу. sincelast каже, коли вони зрушили: ззовні або так, як його власні коміти не пояснюють.
 
 Плагін не радить. Каже факт і замовкає. Усе, що він узагалі здатен сказати, лежить константами в `hooks/sincelast.py`. Нічого не генерується на льоту.
+
+## Що це дає на практиці
+
+Конкретні речі, які ламаються без нього і перестають ламатись із ним.
+
+**Файли з учорашньою датою.** Почав сесію ввечері. Після півночі агент створює `docs/2026-09-11-design.md`, пише «сьогодні» в чейнджлозі або ставить дату в коміт. Усе на день назад, і ніхто цього не помічає, поки не гляне на теку відсортовану. Цей репозиторій іменує файли саме так, звідси проблему й видно.
+
+**Робота по гілці, яка вже поїхала.** Ти зробив pull в іншому терміналі, або колега запушив, або сам зробив rebase. Агент далі править по тому дереву, яке бачив востаннє. У кращому разі перероблює вже полагоджене, у гіршому розрулює конфлікт проти версії, якої вже нема.
+
+**«Спершу глянь git status».** Те, що доводиться повторювати, аби агент не діяв за застарілою картинкою. Більше не треба: йому кажуть, коли позиція справді зрушила, і мовчать, коли ні.
+
+**Повернення через кілька годин.** Пішов на обід, на зустріч, спати. Агент не має уявлення, що минув час, і продовжує з останнього речення. Тепер він знає, що дата перевалила і гілка з'їхала, причому знає це до того, як щось чіпати.
+
+Чого він не робить: не балакає. Нічого не змінилось, нічого й не додається, тож жоден хід не витрачається на шум.
 
 ## Чому факт, а не таймстемп
 
