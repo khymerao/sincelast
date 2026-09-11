@@ -16,6 +16,10 @@ That sentence is measured, not invented. Without it, agents answered questions a
 
 The plugin does not advise. It states a fact and stays silent otherwise. Every sentence it can emit is a template constant in `hooks/sincelast.py`; there is no free-form generated text.
 
+<a href="https://ko-fi.com/org100h">
+  <img alt="Donate on Ko-fi" src="https://ko-fi.com/img/githubbutton_sm.svg">
+</a>
+
 ## What it saves you
 
 Concrete things that go wrong without it, and stop going wrong with it.
@@ -213,6 +217,10 @@ sincelast каже твоєму агентові в Claude Code, що кален
 Це речення не вигадане, а перевірене на агентах. Без нього агент відповідав про файл з пам'яті і помилявся приблизно в половині випадків. З ним перечитував файл у 14 прогонах із 15.
 
 Плагін не радить. Каже факт і замовкає. Усе, що він узагалі здатен сказати, лежить константами в `hooks/sincelast.py`. Нічого не генерується на льоту.
+
+<a href="https://ko-fi.com/org100h">
+  <img alt="Donate on Ko-fi" src="https://ko-fi.com/img/githubbutton_sm.svg">
+</a>
 
 ## Що це дає на практиці
 
