@@ -1,0 +1,41 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|fork|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "timeout": 5,
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/sincelast.py\" || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "timeout": 3,
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/sincelast.py\" || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "timeout": 5,
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/sincelast.py\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "sincelast",
+  "version": "0.1.0",
+  "description": "Two machine-verified facts for Claude Code agents: calendar date and git HEAD/branch drift since the agent's last turn. Silent otherwise.",
+  "author": { "name": "sincelast contributors" },
+  "license": "MIT",
+  "keywords": ["time", "hooks", "context", "git"]
+}
