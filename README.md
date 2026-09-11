@@ -12,7 +12,7 @@ sincelast tells your Claude Code agent when the calendar date or the git HEAD mo
 
 The git fact carries its consequence: `File contents read before that commit may be stale.` It is a note on a fact, never a fact of its own, so nothing is said when nothing moved.
 
-That sentence was chosen by measurement, not taste. Given the bare fact, agents answered a question about the file from memory about half the time and were wrong. Given the fact plus this note, they re-read it in 14 of 15 runs (Fisher exact, p = 0.035). An earlier version stated the elapsed time instead. It scored the same as saying nothing at all, so the whole mechanism for measuring it was removed.
+That sentence is measured, not invented. Without it, agents answered questions about the file from memory and were wrong about half the time. With it, they re-read the file in 14 runs out of 15.
 
 The plugin does not advise. It states a fact and stays silent otherwise. Every sentence it can emit is a template constant in `hooks/sincelast.py`; there is no free-form generated text.
 
@@ -210,7 +210,7 @@ sincelast каже твоєму агентові в Claude Code, що кален
 
 До git-факту додається його наслідок: `File contents read before that commit may be stale.` Це примітка до факту, а не окремий факт, тож коли нічого не рухалось, не кажеться нічого.
 
-Це речення обрали заміром, а не на смак. Отримавши голий факт, агенти відповідали на питання про файл з пам'яті приблизно в половині випадків і помилялись. Отримавши факт разом із приміткою, перечитували файл у 14 прогонах із 15 (точний тест Фішера, p = 0.035). Попередня версія казала натомість тривалість паузи. Результат вийшов такий самий, як і без неї взагалі, тому весь механізм її вимірювання прибрали.
+Це речення не вигадане, а перевірене на агентах. Без нього агент відповідав про файл з пам'яті і помилявся приблизно в половині випадків. З ним перечитував файл у 14 прогонах із 15.
 
 Плагін не радить. Каже факт і замовкає. Усе, що він узагалі здатен сказати, лежить константами в `hooks/sincelast.py`. Нічого не генерується на льоту.
 
