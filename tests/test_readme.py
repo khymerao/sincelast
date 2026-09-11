@@ -4,18 +4,30 @@ The README is the only place a user sees before installing: what the
 plugin reads, where it writes, how to purge it, how to turn it off. These
 assertions pin the disclosures that must not silently drop out of it.
 """
+import re
 import pathlib
 
 README = (pathlib.Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
 
 
 def _first_prose_line() -> str:
-    """Перше речення README — це перший непорожній рядок, що не є
-    заголовком. Заголовок `# sincelast` не є реченням."""
+    """Перше речення README — перший непорожній рядок, що є прозою.
+
+    Не проза: заголовки, горизонтальні роздільники, HTML-якорі та
+    рядок мовної навігації (README двомовний в одному файлі, тож над
+    першим реченням стоїть `**[English](#english) · [Українська](...)**`).
+    Намір тесту — що перше, що читає людина, дослівно збігається зі
+    специфікацією; обв'яз навігації цього не змінює."""
     for line in README.splitlines():
         line = line.strip()
-        if line and not line.startswith("#"):
-            return line
+        if not line or line.startswith("#") or line.startswith("---"):
+            continue
+        if line.startswith("<a name=") or line.startswith("<a id="):
+            continue
+        # рядок навігації: самі лише посилання, роздільники й форматування
+        if re.fullmatch(r"[*_\s·|]*(?:\[[^\]]+\]\(#[^)]+\)[*_\s·|]*)+", line):
+            continue
+        return line
     return ""
 
 
