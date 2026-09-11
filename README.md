@@ -109,9 +109,20 @@ Every failure path is silence. The module is wrapped in `try/except BaseExceptio
 
 ## Tests
 
+The plugin itself needs nothing but the standard library. The **tests** need
+pytest, which is a development dependency and deliberately not vendored:
+
 ```
-python3 -m pytest tests/ -q
+python3 -m venv .venv
+.venv/bin/python -m pip install pytest
+.venv/bin/python -m pytest tests/ -q
 ```
+
+Keep the venv outside your working tree if the repository is under any tool
+that measures changed files — a `.venv/` inside the tree shows up as thousands
+of modified paths.
+
+93 tests. They run offline and create no files outside `tmp_path`.
 
 ## Claude Code version
 
