@@ -50,12 +50,12 @@ def test_date_unchanged_within_day(monkeypatch):
 
 
 def test_date_changed_none_stored_is_false():
-    """Нема збереженого start_date — нема з чим порівнювати, тиша."""
+    """Нема збереженого start_date: нема з чим порівнювати, тиша."""
     assert sl.date_changed(None, 1789112462.0) is False
 
 
 def test_utc_machine_vs_local_context(monkeypatch):
-    """Машина в UTC — дата машинна. README документує наслідок для
+    """Машина в UTC: дата машинна. README документує наслідок для
     dev-контейнерів (Berlin-розробник о 02:00), а не приховує його."""
     _with_tz(monkeypatch, "UTC")
     assert sl.machine_date(1789156800.0) == "2026-09-11"  # 22:00 UTC
@@ -64,7 +64,7 @@ def test_utc_machine_vs_local_context(monkeypatch):
 
 def test_dst_fold_does_not_change_the_date(monkeypatch):
     """Осіннє переведення в Europe/Zagreb: 03:00 -> 02:00 у ту саму добу.
-    Година повторюється, календарна дата — ні, тож DATE мусить мовчати."""
+    Година повторюється, календарна дата: ні, тож DATE мусить мовчати."""
     _with_tz(monkeypatch, "Europe/Zagreb")
     # 2026-10-25 01:00 UTC = 03:00 CEST, за мить до згортки
     before = 1792580400.0
@@ -91,7 +91,7 @@ def test_dst_transition_across_midnight_still_reports(monkeypatch):
 
 
 def test_clock_rewind_within_a_day_is_silent(monkeypatch):
-    """NTP зсунув годинник назад, але не через північ — дата та сама."""
+    """NTP зсунув годинник назад, але не через північ: дата та сама."""
     _with_tz(monkeypatch, "Europe/Zagreb")
     later = 1800000000.0
     earlier = later - 1800         # назад на півгодини
@@ -104,7 +104,7 @@ def test_clock_rewind_across_midnight_reports_the_earlier_date(monkeypatch):
     Годинник зсунуто назад через північ. date_changed порівнює
     відрендерені дати, тож «сьогодні» стає вчорашнім числом і факт
     звучить. Це правильно: системний промпт теж несе машинну дату, і
-    якщо машина каже вчора — агент мусить знати, що вони розійшлись."""
+    якщо машина каже вчора: агент мусить знати, що вони розійшлись."""
     _with_tz(monkeypatch, "Europe/Zagreb")
     after_midnight = 1799971200.0   # 2027-01-15 01:00 Europe/Zagreb
     stored = sl.machine_date(after_midnight)

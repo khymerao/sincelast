@@ -83,7 +83,7 @@ def test_f1_external_commit_after_stop_is_ahead(tmp_path, repo):
 
     # TEST_GAP-1: базис мусить зрушити НА ЗВІТІ. Без цього регресія, що
     # перестала його рухати, повторювала б той самий факт на кожному
-    # промпті вічно — і жоден тест би не впав.
+    # промпті вічно: і жоден тест би не впав.
     again = sl.dispatch(base("UserPromptSubmit", cwd=repo), now + 20, root)
     assert again is None, f"той самий факт повторено: {again!r}"
 
@@ -103,7 +103,7 @@ def test_quality2_stop_before_any_session_start_still_anchors_date(tmp_path, rep
     assert out is not None and "Calendar date changed" in out
 
 
-# --- F2: перемикання гілки — MOVED, без ancestor/лічильника ----------------
+# --- F2: перемикання гілки: MOVED, без ancestor/лічильника ----------------
 
 def test_f2_branch_moves_are_moved_not_ancestry_claims(tmp_path, repo):
     root = tmp_path
@@ -169,7 +169,7 @@ def test_never_crashes_and_never_emits_on_bad_input(raw, tmp_path, monkeypatch):
 
 
 def test_full_roundtrip_does_not_hang(tmp_path, monkeypatch, repo):
-    """Стеля не з паперу — просто доказ, що процес завершується
+    """Стеля не з паперу: просто доказ, що процес завершується
     (спека §13.6: реальна цифра round-trip ще не заміряна на цільових
     ОС, це відкрите питання, не перевірений бюджет)."""
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path))
@@ -182,7 +182,7 @@ def test_full_roundtrip_does_not_hang(tmp_path, monkeypatch, repo):
 def test_transcript_is_never_opened(tmp_path, monkeypatch, repo):
     """transcript_path вказує на FIFO без читача: якби плагін спробував
     його відкрити на читання, процес би завис. subprocess-таймаут ловить
-    це напряму — надійніше за st_atime, який relatime/noatime роблять
+    це напряму: надійніше за st_atime, який relatime/noatime роблять
     незастосовним."""
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path))
     fifo = tmp_path / "transcript.jsonl"
@@ -210,7 +210,7 @@ def test_output_shape_when_it_speaks(tmp_path, monkeypatch, repo):
 
 def test_disable_env_silences_everything(tmp_path, monkeypatch, repo):
     """SINCELAST_DISABLE (спека §11, §12b): будь-яке значення, крім
-    0/false, вимикає плагін цілком — ні виводу, ні запису стану."""
+    0/false, вимикає плагін цілком: ні виводу, ні запису стану."""
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path))
     proc = _run_main(json.dumps(base("SessionStart", cwd=repo, source="startup")),
                      env={"SINCELAST_DISABLE": "1"})
@@ -232,7 +232,7 @@ def test_git_fact_carries_the_stale_note(tmp_path, repo):
 
 
 def test_note_does_not_depend_on_how_long_the_gap_was(tmp_path, repo):
-    """Секунда чи доба — наслідок для прочитаних файлів однаковий."""
+    """Секунда чи доба: наслідок для прочитаних файлів однаковий."""
     for gap in (1, 86_400):
         root = tmp_path / f"g{gap}"
         root.mkdir()

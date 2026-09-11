@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # hooks/sincelast.py
-"""sincelast — two machine-verified facts for a Claude Code agent.
+"""sincelast: two machine-verified facts for a Claude Code agent.
 
 DATE: the calendar date changed since this session's process started.
 GIT: git HEAD/branch moved since the agent's last turn (Stop) ended.
 
 Silence is the norm. The plugin speaks only when a fact is true. Every
 sentence comes from a closed set of template constants (see the RENDER
-section below) — there is no runtime lexical scan.
+section below). There is no runtime lexical scan.
 
 The plugin never reads transcript_path. It is present in every hook
 payload and is intentionally ignored: the transcript documented carries
@@ -46,7 +46,7 @@ def state_dir() -> pathlib.Path:
 
 
 def state_path(root, session_id: str) -> pathlib.Path:
-    safe = "".join(c for c in (session_id or "") if c.isalnum() or c in "-_")
+    safe = "".join(c for c in session_id if c.isalnum() or c in "-_")
     return pathlib.Path(root) / f"{safe or 'nosession'}.json"
 
 
@@ -57,14 +57,14 @@ def load_state(path):
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, ValueError):
-        return None  # missing or corrupt — both mean "no state"
+        return None  # missing or corrupt both mean "no state"
     return data if isinstance(data, dict) else None
 
 
 def save_state(path, data: dict) -> bool:
     try:
         if path.is_symlink():
-            return False  # symlink/TOCTOU — refuse, don't write through it
+            return False  # symlink/TOCTOU: refuse, don't write through it
         path.parent.mkdir(parents=True, exist_ok=True)
         os.chmod(path.parent, 0o700)
         fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".tmp-")
@@ -88,12 +88,12 @@ def prune_state(root, now: float, days: int = STATE_TTL_DAYS) -> int:
     """Remove state files whose own `updated_ts` field is older than
     `days`. Reads the JSON field, not filesystem mtime: mtime survives
     `touch` and copies that don't preserve file attributes. A file that
-    can't be read as valid state is removed too — it is dead weight
+    can't be read as valid state is removed too, being dead weight
     either way."""
     cutoff = now - days * 86400
     removed = 0
     try:
-        # *.json only — never iterdir(). A concurrent writer's mkstemp
+        # *.json only, never iterdir(). A concurrent writer's mkstemp
         # temp file sits in this directory, created but not yet filled,
         # until its os.replace lands. iterdir() saw it, load_state
         # returned None, and this loop deleted another process's file
@@ -118,7 +118,7 @@ def prune_state(root, now: float, days: int = STATE_TTL_DAYS) -> int:
 
 def machine_date(ts: float) -> str:
     """Machine-local calendar date, ISO-8601 Gregorian. Computed in
-    Python — never via date(1), whose output is locale-sensitive (Thai
+    Python, never via date(1), whose output is locale-sensitive (Thai
     Buddhist, Japanese era, non-ASCII month names) and would not match
     the Gregorian date the system prompt carries."""
     return _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
@@ -126,7 +126,7 @@ def machine_date(ts: float) -> str:
 
 def date_changed(stored, ts: float) -> bool:
     if not stored:
-        return False  # no stored anchor — nothing to compare, stay silent
+        return False  # no stored anchor, nothing to compare, stay silent
     return machine_date(ts) != stored
 
 
@@ -153,11 +153,6 @@ def _run(cwd: str, args, timeout_s: float):
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
-def _code(cwd: str, args, timeout_s: float):
-    proc = _proc(cwd, args, timeout_s)
-    return None if proc is None else proc.returncode
-
-
 def git_snapshot(cwd: str, timeout_s: float = GIT_TIMEOUT_S):
     toplevel = _run(cwd, ["rev-parse", "--show-toplevel"], timeout_s)
     if not toplevel:
@@ -172,21 +167,21 @@ def git_snapshot(cwd: str, timeout_s: float = GIT_TIMEOUT_S):
 def _is_ancestor(cwd: str, old: str, new: str, timeout_s: float = GIT_TIMEOUT_S):
     """0 -> old is an ancestor of new; 1 -> diverged or rewritten;
     anything else -> couldn't tell (timeout, missing object)."""
-    code = _code(cwd, ["merge-base", "--is-ancestor", old, new], timeout_s)
-    if code in (0, 1):
-        return code == 0
+    proc = _proc(cwd, ["merge-base", "--is-ancestor", old, new], timeout_s)
+    if proc is not None and proc.returncode in (0, 1):
+        return proc.returncode == 0
     return None
 
 
 def git_compare(old, new, cwd: str, timeout_s: float = GIT_TIMEOUT_S):
     """Structured fact, or None. Ancestry and commit counts are computed
-    only when the named branch is unchanged (spec §6/§9) — a branch
+    only when the named branch is unchanged (spec §6/§9). A branch
     switch or a detach is always MOVED, never AHEAD or DIVERGED, no
     matter how the histories relate."""
     if not old or not new:
         return None
     if old.get("toplevel") != new.get("toplevel"):
-        return None  # different repo/worktree — not our comparison
+        return None  # different repo/worktree, not our comparison
     if old.get("head") == new.get("head") and old.get("branch") == new.get("branch"):
         return None
     if old.get("branch") == new.get("branch") and new.get("branch") is not None:
@@ -241,7 +236,7 @@ _CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
 
 def _sanitize_branch(name) -> str:
     """Strip control characters and cap length. Data sanitization, not a
-    lexical filter — the value can still contain arbitrary text,
+    lexical filter: the value can still contain arbitrary text,
     including words that would trip a substring-matching censor."""
     if not name:
         return ""
@@ -295,6 +290,21 @@ def render_git(kind: str, params: dict) -> str:
 
 # --- DISPATCH --------------------------------------------------------------
 
+def _fresh_state(today: str, now: float, git) -> dict:
+    """The one shape a state file takes when it is anchored or
+    re-anchored. Every field the file may carry is named here;
+    tests/blackbox.py F3 pins the set."""
+    return {"start_date": today, "announced_date": None, "updated_ts": now, "git": git}
+
+
+def _git_fact(saved_git, new_git, cwd: str):
+    """Rendered git fact with its staleness note, or None for silence."""
+    cmp_ = git_compare(saved_git, new_git, cwd)
+    if cmp_ is None:
+        return None
+    return with_stale(render_git(*cmp_))
+
+
 def dispatch(payload: dict, now: float, root):
     """Pure(-ish) core: no stdin/stdout, no sys.exit. Returns the
     additionalContext string, or None for silence. `root` is the state
@@ -311,12 +321,12 @@ def dispatch(payload: dict, now: float, root):
         # the agent's turn is what the agent saw; anything else at the
         # next prompt is external. Nothing is ever reported here.
         data = dict(saved or {})
-        data["git"] = git_snapshot(cwd, GIT_TIMEOUT_S)
+        data["git"] = git_snapshot(cwd)
         data["updated_ts"] = now
         # A Stop seen before any SessionStart would otherwise write a record
         # with no start_date. The next UserPromptSubmit takes the "state
         # exists" branch, never anchors, and date_changed(None, ...) is False
-        # forever after — DATE silently dead for this session with no error.
+        # forever after: DATE silently dead for this session with no error.
         # Anchor here rather than leave a silent-disable path.
         data.setdefault("start_date", today)
         save_state(path, data)
@@ -325,21 +335,18 @@ def dispatch(payload: dict, now: float, root):
     if event == "SessionStart":
         source = payload.get("source")
         if source in ("startup", "resume", "clear", "fork"):
-            new_git = git_snapshot(cwd, GIT_TIMEOUT_S)
+            new_git = git_snapshot(cwd)
             fact = None
             if source == "resume" and saved is not None:
                 # The agent carries an old belief from the previous
-                # process — compare against it before re-anchoring.
-                cmp_ = git_compare(saved.get("git"), new_git, cwd, GIT_TIMEOUT_S)
-                if cmp_ is not None:
-                    fact = with_stale(render_git(*cmp_))
+                # process: compare against it before re-anchoring.
+                fact = _git_fact(saved.get("git"), new_git, cwd)
             # startup|clear|fork: no prior belief exists, snapshot silently.
-            save_state(path, {"start_date": today, "announced_date": None,
-                              "updated_ts": now, "git": new_git})
-            prune_state(root, now, STATE_TTL_DAYS)
+            save_state(path, _fresh_state(today, now, new_git))
+            prune_state(root, now)
             return fact
         if source == "compact":
-            # compact never touches the git baseline or start_date — a
+            # compact never touches the git baseline or start_date. A
             # mid-turn compaction is the agent's own work in progress,
             # and the date line it drops from context is re-emitted.
             if saved is None or not date_changed(saved.get("start_date"), now):
@@ -351,9 +358,7 @@ def dispatch(payload: dict, now: float, root):
         if saved is None:
             # First observation for this session_id: register the
             # baseline, don't report against nothing.
-            save_state(path, {"start_date": today, "announced_date": None,
-                              "updated_ts": now,
-                              "git": git_snapshot(cwd, GIT_TIMEOUT_S)})
+            save_state(path, _fresh_state(today, now, git_snapshot(cwd)))
             return None
 
         facts = []
@@ -361,10 +366,10 @@ def dispatch(payload: dict, now: float, root):
             facts.append(render_date(today, saved["start_date"]))
             saved["announced_date"] = today
 
-        new_git = git_snapshot(cwd, GIT_TIMEOUT_S)
-        cmp_ = git_compare(saved.get("git"), new_git, cwd, GIT_TIMEOUT_S)
-        if cmp_ is not None:
-            facts.append(with_stale(render_git(*cmp_)))
+        new_git = git_snapshot(cwd)
+        git_fact = _git_fact(saved.get("git"), new_git, cwd)
+        if git_fact is not None:
+            facts.append(git_fact)
         saved["git"] = new_git
         saved["updated_ts"] = now
         save_state(path, saved)
@@ -399,10 +404,22 @@ def main() -> int:
         text = dispatch(payload, time.time(), state_dir())
     except BaseException as exc:
         if os.environ.get(DEBUG_ENV):
-            # Type, module, line, event — never the payload or locals().
-            tb = getattr(exc, "__traceback__", None)
-            line = tb.tb_lineno if tb is not None else 0
-            print(f"sincelast: {type(exc).__name__} at {__name__}:{line} during {event}",
+            # Type, file, line, event. Never the payload or locals().
+            # The outermost frame is always the dispatch() call above and
+            # would name the same line for every failure, so report the
+            # innermost frame in this file (the call that failed), or the
+            # innermost frame overall if none is ours.
+            tb = exc.__traceback__
+            ours = None
+            while tb is not None:
+                if tb.tb_frame.f_code.co_filename == __file__:
+                    ours = tb
+                if tb.tb_next is None:
+                    break
+                tb = tb.tb_next
+            tb = ours or tb
+            where = f"{os.path.basename(tb.tb_frame.f_code.co_filename)}:{tb.tb_lineno}"
+            print(f"sincelast: {type(exc).__name__} at {where} during {event}",
                   file=sys.stderr)
         return 0
     if not text:
@@ -416,7 +433,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Exit 0 unconditionally: main() only ever returns 0, and anything
+    # it raises must not become a blocking Stop.
     try:
-        sys.exit(main())
+        main()
     except BaseException:
-        sys.exit(0)
+        pass
+    sys.exit(0)

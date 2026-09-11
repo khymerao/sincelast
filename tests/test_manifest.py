@@ -42,7 +42,7 @@ def test_every_entry_has_explicit_timeout():
 def test_fail_open_suffix_present():
     for event, hook in _entries():
         assert hook["command"].rstrip().endswith("|| true"), \
-            f"{event}: нема '|| true' — синтаксична помилка стане блокуванням"
+            f"{event}: нема '|| true': синтаксична помилка стане блокуванням"
 
 
 def test_uses_bash_shell():
@@ -61,7 +61,7 @@ def test_entrypoint_exists():
 
 
 def test_f5_session_start_matcher_covers_exactly_five_sources():
-    """F5: матчер SessionStart — регулярний вираз, що збігається з
+    """F5: матчер SessionStart: регулярний вираз, що збігається з
     кожним із п'яти документованих source і ні з чим іншим."""
     matcher = _hooks()["SessionStart"][0]["matcher"]
     pattern = re.compile(matcher)

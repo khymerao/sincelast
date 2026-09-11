@@ -4,7 +4,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "hooks"))
 import sincelast as sl
 
 # Заморожений whitelist слів, витягнутий зі шаблонів на момент їх
-# написання. Тест не звіряє шаблони самі із собою в реальному часі —
+# написання. Тест не звіряє шаблони самі із собою в реальному часі,
 # він фіксує словник тут, окремо, тож майбутня правка шаблону, що
 # додає "please"/"should"/"verify", ламає тест, а не проходить мовчки.
 WHITELIST = {
@@ -20,7 +20,7 @@ TEMPLATES = [sl.T_DATE, sl.T_GIT_AHEAD, sl.T_GIT_DIVERGED, sl.T_GIT_MOVED,
 
 
 def _words(text):
-    """Слова шаблону. Дужки лишаються частиною слова, бо "commit(s)" —
+    """Слова шаблону. Дужки лишаються частиною слова, бо "commit(s)" це
     одне слово; але дужка, що тільки закриває обгортку ("(machine-local)"),
     словом не є і відрізається."""
     out = []
@@ -115,7 +115,7 @@ def test_long_branch_is_truncated_with_ellipsis():
 
 
 def test_branch_at_exactly_the_cap_is_not_marked():
-    """A name that fits is returned whole — no ellipsis, nothing removed."""
+    """A name that fits is returned whole: no ellipsis, nothing removed."""
     from sincelast import _sanitize_branch, _BRANCH_MAX_LEN
     exact = "y" * _BRANCH_MAX_LEN
     assert _sanitize_branch(exact) == exact

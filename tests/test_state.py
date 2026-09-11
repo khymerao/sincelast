@@ -62,7 +62,7 @@ def test_no_temp_file_left_behind(tmp_path):
 
 
 def test_prune_reads_updated_ts_not_mtime(tmp_path):
-    """Прибирання читає власне поле updated_ts файла, не mtime ФС —
+    """Прибирання читає власне поле updated_ts файла, а не mtime ФС,
     mtime переживає touch і копіювання без збереження атрибутів."""
     root = tmp_path
     old = sl.state_path(root, "old-sess")
@@ -70,7 +70,7 @@ def test_prune_reads_updated_ts_not_mtime(tmp_path):
     now = 1_800_000_000.0
     sl.save_state(old, {"updated_ts": now - 40 * 86400})
     sl.save_state(new, {"updated_ts": now - 1 * 86400})
-    os.utime(old, (now, now))  # mtime свіжий, updated_ts — старий: має все одно видалитись
+    os.utime(old, (now, now))  # mtime свіжий, updated_ts: старий: має все одно видалитись
     assert sl.prune_state(old.parent, now, days=30) == 1
     assert not old.exists() and new.exists()
 
@@ -87,7 +87,7 @@ def test_prune_never_touches_a_concurrent_writers_temp_file(tmp_path):
 
     save_state створює mkstemp-файл ПОРОЖНІМ і заповнює його перед
     os.replace. Доти він лежить у теці. prune_state ходив по iterdir(),
-    читав його як невалідний стан і видаляв — чужий процес потім падав
+    читав його як невалідний стан і видаляв: чужий процес потім падав
     на os.replace, і його стан зникав мовчки. Відтворювалось приблизно
     в одному прогоні з восьми при шести паралельних сесіях."""
     import os, tempfile
@@ -119,7 +119,7 @@ def test_prune_still_removes_genuinely_old_state(tmp_path):
 
 def test_prune_removes_an_unreadable_json_file(tmp_path):
     """Свідомо лишено як було: файл із суфіксом .json, який не читається,
-    видаляється — він мертва вага. Часткового .json при нормальному записі
+    видаляється: він мертва вага. Часткового .json при нормальному записі
     не буває: save_state пише в mkstemp без суфікса і робить атомарний
     os.replace, тож недописаного .json просто не існує."""
     root = tmp_path / "sincelast"

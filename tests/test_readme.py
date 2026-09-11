@@ -11,12 +11,12 @@ README = (pathlib.Path(__file__).resolve().parents[1] / "README.md").read_text(e
 
 
 def _first_prose_line() -> str:
-    """Перше речення README — перший непорожній рядок, що є прозою.
+    """Перше речення README: перший непорожній рядок, що є прозою.
 
     Не проза: заголовки, горизонтальні роздільники, HTML-якорі та
     рядок мовної навігації (README двомовний в одному файлі, тож над
     першим реченням стоїть `**[English](#english) · [Українська](...)**`).
-    Намір тесту — що перше, що читає людина, дослівно збігається зі
+    Намір тесту: що перше, що читає людина, дослівно збігається зі
     специфікацією; обв'яз навігації цього не змінює."""
     for line in README.splitlines():
         line = line.strip()
@@ -43,7 +43,7 @@ def test_data_statement_present():
 
 
 def test_transcript_is_explicitly_disclaimed():
-    """Найсильніша обіцянка плагіна — транскрипт не читається. Вона мусить
+    """Найсильніша обіцянка плагіна: транскрипт не читається. Вона мусить
     бути в README, а не лише в докстрінгу."""
     assert "transcript_path" in README
     assert "never read" in README.lower()
@@ -61,7 +61,7 @@ def test_documents_bash_requirement_for_windows():
 
 
 def test_bash_requirement_is_stated_as_mandatory():
-    """Acceptance: сказано прямо, що bash обов'язковий — не натяком."""
+    """Acceptance: сказано прямо, що bash обов'язковий: не натяком."""
     assert "bash is required" in README.lower()
 
 

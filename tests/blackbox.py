@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Blackbox suite for sincelast — the process, not the functions.
+"""Blackbox suite for sincelast: the process, not the functions.
 
 Runs hooks/sincelast.py as a separate process with real stdin, against
 real git repositories, and checks only what is observable from outside:
@@ -170,7 +170,7 @@ def group_failopen():
         "юнікод": '{"hook_event_name":"Stop","session_id":"🔥/../../etc"}',
         "cwd не існує": '{"hook_event_name":"UserPromptSubmit","session_id":"x","cwd":"/nope/nope"}',
     }
-    # Ці три ДОХОДЯТЬ до except BaseException — решта кейсів вище
+    # Ці три ДОХОДЯТЬ до except BaseException: решта кейсів вище
     # обробляється явними перевірками і catch-all не задіює. Без них
     # набір не ловив підміну BaseException на вужчий виняток.
     cases.update({
@@ -248,12 +248,12 @@ def group_state():
     ok("F2 файл 0600", stat.S_IMODE(f.stat().st_mode) == 0o600, oct(stat.S_IMODE(f.stat().st_mode)))
     data = json.loads(f.read_text())
     ok("F3 рівно чотири поля або менше", set(data) <= {"git","start_date","announced_date","updated_ts"}, str(set(data)))
-    ok("F4 таймстемп — число", isinstance(data.get("updated_ts"), (int, float)), repr(data.get("updated_ts")))
+    ok("F4 таймстемп: число", isinstance(data.get("updated_ts"), (int, float)), repr(data.get("updated_ts")))
     ok("F5 нема локалізованих рядків часу",
        not any(isinstance(v, str) and (":" in v and "-" in v) for k, v in data.items() if k != "git"),
        str(data))
     # F6 симлінк як ціль.
-    # ВАЖЛИВО: перевіряти "victim не змінився" безглуздо — os.replace
+    # ВАЖЛИВО: перевіряти "victim не змінився" безглуздо: os.replace
     # замінює сам симлінк, а не пише крізь нього, тож victim цілий і БЕЗ
     # захисту (перевірено окремо). Спостережуваний наслідок захисту в
     # тому, що симлінк ЛИШАЄТЬСЯ симлінком.
@@ -267,7 +267,7 @@ def group_state():
     link.symlink_to(victim)
     run(ev("Stop", sid3, repo), sh)
     ok("F6 save_state відмовляє писати через симлінк",
-       link.is_symlink(), "симлінк замінено звичайним файлом — захист обійдено")
+       link.is_symlink(), "симлінк замінено звичайним файлом: захист обійдено")
     ok("F6b ціль симлінка не змінено",
        victim.read_text() == '{"canary": true}', victim.read_text()[:60])
     # І окремо: prune прибирає симлінк, але НЕ чіпає його ціль.
@@ -336,7 +336,7 @@ def group_perf():
     times = [run(ev("UserPromptSubmit", sid, repo), sh)[1] for _ in range(7)]
     times.sort()
     med = times[len(times) // 2]
-    note(f"медіана round-trip: {med:.0f} мс (мін {times[0]:.0f}, макс {times[-1]:.0f}) — "
+    note(f"медіана round-trip: {med:.0f} мс (мін {times[0]:.0f}, макс {times[-1]:.0f}): "
          f"включно зі стартом інтерпретатора, репо на 200 комітів")
     ok("I1 round-trip < 2000 мс", med < 2000, f"{med:.0f} мс")
     shutil.rmtree(sh); shutil.rmtree(repo)

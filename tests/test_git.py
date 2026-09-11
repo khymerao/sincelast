@@ -57,7 +57,7 @@ def test_fast_forward_is_ahead_with_count(repo):
 
 
 def test_rebase_same_branch_is_diverged(repo):
-    """F2 контроль: rebase на тій самій гілці — DIVERGED, не AHEAD.
+    """F2 контроль: rebase на тій самій гілці: DIVERGED, не AHEAD.
 
     Базис береться ПІСЛЯ c2: перепис має зсунути саме той коміт, який
     агент бачив. Базис до c2 лишився б предком переписаного HEAD і дав
@@ -71,7 +71,7 @@ def test_rebase_same_branch_is_diverged(repo):
 
 
 def test_branch_switch_is_moved_not_ahead(repo):
-    """F2: перемикання гілки — MOVED, ніколи AHEAD/DIVERGED навіть
+    """F2: перемикання гілки: MOVED, ніколи AHEAD/DIVERGED навіть
     якщо нова гілка попереду за комітами."""
     old = sl.git_snapshot(str(repo), 2.0)
     _git(repo, "checkout", "-q", "-b", "feature")
@@ -82,7 +82,7 @@ def test_branch_switch_is_moved_not_ahead(repo):
 
 
 def test_checkout_older_commit_is_moved(repo):
-    """F2: git checkout HEAD~N — переміщення, не перепис."""
+    """F2: git checkout HEAD~N: переміщення, не перепис."""
     _git(repo, "commit", "-q", "--allow-empty", "-m", "c2")
     _git(repo, "commit", "-q", "--allow-empty", "-m", "c3")
     old = sl.git_snapshot(str(repo), 2.0)
@@ -101,7 +101,7 @@ def test_detach_is_moved(repo):
 
 
 def test_switch_to_divergent_branch_is_moved(repo):
-    """F2: git switch на розбіжну гілку — MOVED, без ancestor/лічильника."""
+    """F2: git switch на розбіжну гілку: MOVED, без ancestor/лічильника."""
     _git(repo, "checkout", "-q", "-b", "feature")
     _git(repo, "commit", "-q", "--allow-empty", "-m", "feature-c2")
     old = sl.git_snapshot(str(repo), 2.0)
