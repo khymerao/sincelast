@@ -121,42 +121,29 @@ def test_branch_at_exactly_the_cap_is_not_marked():
     assert _sanitize_branch(exact) == exact
 
 
-# --- примітка про тривалість паузи ---------------------------------------
+# --- примітка про наслідок ------------------------------------------------
 
-@pytest.mark.parametrize("seconds,expected", [
-    (600, "10m"), (3599, "59m"), (3600, "1h"), (50400, "14h"),
-    (86399, "23h"), (86400, "1d"), (259200, "3d"),
-])
-def test_format_ago(seconds, expected):
-    assert sl.format_ago(seconds) == expected
-
-
-def test_format_ago_below_threshold_is_none():
-    """Коротка пауза нічого не пояснює. '4 хв тому' це шум, а не контекст."""
-    assert sl.format_ago(599) is None
-    assert sl.format_ago(0) is None
-    assert sl.format_ago(-100) is None
-
-
-def test_ago_note_appends_to_a_git_fact():
+def test_stale_note_rides_on_a_git_fact():
     fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
-    withnote = sl.with_ago(fact, 50400)
-    assert withnote.startswith(fact.rstrip("."))
-    assert "14h" in withnote
+    out = sl.with_stale(fact)
+    assert out.startswith(fact)
+    assert "may be stale" in out
 
 
-def test_ago_note_absent_below_threshold():
-    fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
-    assert sl.with_ago(fact, 60) == fact
+def test_no_fact_means_no_note():
+    assert sl.with_stale(None) is None
+    assert sl.with_stale("") == ""
 
 
-def test_ago_note_absent_without_anchor():
-    """Немає stop_ts — немає примітки. Не вигадуємо тривалість."""
-    fact = sl.render_git("AHEAD", {"branch": "main", "old": "aaa", "new": "bbb", "n": 1})
-    assert sl.with_ago(fact, None) == fact
-
-
-def test_ago_note_is_a_closed_template():
+def test_stale_note_is_a_closed_constant():
     """Примітка теж константа, а не згенерований текст."""
-    assert "{ago}" in sl.T_SINCE
-    assert sl.T_SINCE.count("{") == 1
+    assert "{" not in sl.T_STALE
+
+
+def test_stale_note_states_a_consequence_not_an_order():
+    """Виміряно: наказ тягне зайві Read, констатація наслідку дає рівно
+    одну перевірку. Формулювання не повертати в імператив."""
+    low = sl.T_STALE.lower()
+    for imperative in ("re-read", "reread", "check ", "verify", "make sure", "you should"):
+        assert imperative not in low, f"імператив у примітці: {imperative!r}"
+    assert "may be stale" in low
